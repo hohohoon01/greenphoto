@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>그린그린 네컷 · 강동중학교</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green:#4c9a2a; --green-dark:#3b7c1f;
+    --border:#d8ddd6; --fg:#1f2937; --muted:#6b7280;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:'Jua','Pretendard','Malgun Gothic',-apple-system,BlinkMacSystemFont,sans-serif;
+    background:#f2f6ef; color:var(--fg);
+  }
+  .app{max-width:520px; margin:0 auto; padding:6px 10px 12px; min-height:100vh; display:flex; flex-direction:column;}
+  header{text-align:center; padding:4px 0 6px;}
+  header h1{margin:0; font-size:21px; color:var(--green-dark); letter-spacing:.5px;}
+  header p{margin:2px 0 0; font-size:11px; color:var(--muted); font-family:'Pretendard',sans-serif;}
+  main{flex:1;}
+  .screen{display:none;}
+  .screen.active{display:block;}
+  .card{background:#fff; border:1px solid var(--border); border-radius:12px; padding:10px 12px; margin-bottom:8px;}
+  .card h2{margin:0 0 8px; font-size:15px; color:var(--green-dark);}
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5; font-family:'Pretendard',sans-serif; margin:6px 0 0;}
+  input[type=text]{
+    width:100%; padding:11px; font-size:18px; text-align:center; letter-spacing:2px;
+    border:2px solid var(--border); border-radius:10px; font-family:inherit;
+  }
+  input[type=text]:focus{outline:none; border-color:var(--green);}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:5px;
+    width:100%; padding:11px 10px; font-size:15px; font-family:inherit;
+    border:1.5px solid var(--border); background:#fff; color:var(--fg);
+    border-radius:10px; cursor:pointer; margin-top:6px;
+  }
+  .btn:active{transform:scale(.985);}
+  .btn.primary{background:var(--green); border-color:var(--green); color:#fff;}
+  .btn.big{font-size:16px; padding:13px 10px;}
+  .btn.mini{font-size:12.5px; padding:8px 10px;}
+  .btn:disabled{opacity:.5;}
+  .row{display:flex; gap:6px;}
+  .grow{flex:1;}
+  .icon{width:50px; flex:0 0 50px; font-size:19px;}
+  .camstate{
+    display:flex; align-items:center; gap:6px; justify-content:center;
+    font-size:11.5px; font-family:'Pretendard',sans-serif; color:var(--muted);
+    background:#fff; border:1px solid var(--border); border-radius:8px;
+    padding:5px 8px; margin-bottom:6px;
+  }
+  .led{width:9px; height:9px; border-radius:50%; background:#d1d5db; flex:0 0 9px;}
+  .led.ok{background:#22c55e;} .led.wait{background:#f59e0b;} .led.err{background:#ef4444;}
+  .camwrap{
+    position:relative; width:min(100%, 37vh); aspect-ratio:3/4; margin:0 auto; background:#111;
+    border-radius:12px; overflow:hidden; border:3px solid var(--green);
+  }
+  video{width:100%; height:100%; object-fit:cover; display:block; transform:scaleX(-1);}
+  video.rear{transform:none;}
+  .camMsg{
+    position:absolute; left:0; right:0; top:50%; transform:translateY(-50%);
+    text-align:center; color:#fff; font-size:18px; text-shadow:0 2px 6px rgba(0,0,0,.7); padding:0 12px;
+  }
+  .countdown{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:86px; color:#fff; text-shadow:0 4px 14px rgba(0,0,0,.6);
+  }
+  .flash{position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none;}
+  .flash.on{opacity:.85; transition:opacity .05s;}
+  .badge{
+    position:absolute; right:8px; top:8px; background:rgba(0,0,0,.55); color:#fff;
+    padding:3px 9px; border-radius:16px; font-size:12px;
+  }
+  .thumbs{display:grid; grid-template-columns:repeat(6,1fr); gap:4px; margin-top:6px;}
+  .thumbs div{aspect-ratio:4/5; background:#e6ebe3; border-radius:5px; overflow:hidden;}
+  .thumbs img{width:100%; height:100%; object-fit:cover; display:block;}
+  .picks{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; max-width:400px; margin:0 auto;}
+  .pick{position:relative; border-radius:8px; overflow:hidden; border:3px solid transparent; cursor:pointer;}
+  .pick img{width:100%; aspect-ratio:4/5; object-fit:cover; display:block;}
+  .pick.on{border-color:var(--green);}
+  .pick .no{
+    position:absolute; right:3px; top:3px; width:21px; height:21px; border-radius:50%;
+    background:rgba(255,255,255,.9); color:#9aa39a; display:flex; align-items:center;
+    justify-content:center; font-size:12px;
+  }
+  .pick.on .no{background:var(--green); color:#fff;}
+  .counter{text-align:center; font-size:14px; color:var(--green-dark); margin:6px 0 0;}
+  .frameRow{display:flex; gap:12px; align-items:center;}
+  #preview{width:112px; flex:0 0 112px; border-radius:8px; border:1px solid var(--border); display:block;}
+  .dots{display:flex; flex-wrap:wrap; gap:10px 12px; flex:1; justify-content:center;}
+  .dotbox{width:46px; text-align:center; cursor:pointer;}
+  .dot{
+    width:38px; height:38px; border-radius:50%; margin:0 auto 3px;
+    border:3px solid #fff; box-sizing:border-box;
+    outline:2px solid transparent; outline-offset:2px;
+  }
+  .dotbox.on .dot{outline-color:var(--green);}
+  .dotbox span{font-size:11px; color:var(--muted); font-family:'Pretendard',sans-serif;}
+  .dotbox.on span{color:var(--green-dark);}
+  #result{
+    width:100%; max-height:56vh; object-fit:contain; border-radius:10px; display:block;
+    border:1px solid var(--border); margin:0 auto;
+    -webkit-touch-callout:default; touch-action:manipulation;
+  }
+  .status{font-size:12.5px; text-align:center; margin-top:6px; min-height:16px; font-family:'Pretendard',sans-serif; line-height:1.5;}
+  .status.ok{color:var(--green-dark);} .status.err{color:#b91c1c;}
+  footer{text-align:center; font-size:10px; color:#9aa39a; padding:10px 0 4px; font-family:'Pretendard',sans-serif;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <h1>🌱 그린그린 네컷</h1>
+    <p>강동중학교 환경사랑 포토부스 · 엽서(100×148mm) 인쇄용</p>
+  </header>
+
+  <div class="camstate" id="camState">
+    <span class="led wait" id="led"></span>
+    <span id="camStateText">웹캠 연결 중입니다. 권한 창이 뜨면 ‘허용’을 눌러 주세요.</span>
+  </div>
+
+  <main>
+
+    <!-- 1. 학번 -->
+    <section id="s1" class="screen active">
+      <div class="card">
+        <h2>1. 학번을 입력하세요</h2>
+        <input type="text" id="studentId" inputmode="numeric" placeholder="예) 10312" maxlength="10">
+        <p class="hint">학번은 ‘2026 네컷사진 리스트’ 시트에 저장됩니다. 웹캠 권한은 <b>처음 한 번만</b> 허용하면 됩니다.</p>
+      </div>
+      <button class="btn primary big" id="btnToCam">📷 다음: 사진 촬영하기</button>
+      <div class="status" id="st1"></div>
+    </section>
+
+    <!-- 2. 촬영 -->
+    <section id="s2" class="screen">
+      <div class="camwrap">
+        <video id="video" playsinline webkit-playsinline autoplay muted></video>
+        <div class="camMsg" id="camMsg">사진을 촬영하세요</div>
+        <div class="countdown" id="countdown"></div>
+        <div class="flash" id="flash"></div>
+        <div class="badge"><span id="shotCount">0</span> / 6</div>
+      </div>
+      <div class="row">
+        <button class="btn primary grow" id="btnShutter">📸 셔터 누르기(자동촬영)</button>
+        <button class="btn icon" id="btnSound" title="셔터 소리">🔊</button>
+        <button class="btn icon" id="btnFlip" title="카메라 전환">🔄</button>
+      </div>
+      <p class="hint" style="text-align:center;">3초 간격으로 6장이 자동 촬영됩니다.</p>
+
+      <div class="card hidden" id="fallbackBox">
+        <h2>웹캠을 사용할 수 없어요</h2>
+        <p class="hint" id="permText"></p>
+        <button class="btn mini" id="btnRetryCam">🔄 웹캠 다시 연결</button>
+        <label class="btn mini" for="fileCam">📸 기기 카메라로 한 장 찍기</label>
+        <input type="file" id="fileCam" accept="image/*" capture="user" class="hidden">
+        <label class="btn mini" for="fileAlbum">🖼️ 앨범에서 사진 고르기</label>
+        <input type="file" id="fileAlbum" accept="image/*" multiple class="hidden">
+      </div>
+
+      <div class="thumbs" id="camThumbs"></div>
+      <div class="row">
+        <button class="btn" id="btnBack2" style="flex:0 0 32%;">이전</button>
+        <button class="btn primary grow" id="btnToSelect">다음: 사진 선택</button>
+      </div>
+      <div class="status" id="st2"></div>
+    </section>
+
+    <!-- 3. 사진 선택 -->
+    <section id="s3" class="screen">
+      <div class="card">
+        <h2>3. 그린그린 순간 4장 선택하기</h2>
+        <div class="picks" id="picks"></div>
+        <div class="counter">선택 <span id="selCount">0</span> / 4</div>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnBack3" style="flex:0 0 32%;">이전</button>
+        <button class="btn primary grow" id="btnToFrame">다음: 프레임 선택</button>
+      </div>
+      <div class="status" id="st3"></div>
+    </section>
+
+    <!-- 4. 프레임 -->
+    <section id="s4" class="screen">
+      <div class="card">
+        <h2>4. 프레임 색상 선택</h2>
+        <div class="frameRow">
+          <canvas id="preview"></canvas>
+          <div class="dots" id="dots"></div>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnBack4" style="flex:0 0 32%;">이전</button>
+        <button class="btn primary grow big" id="btnMake">🌿✨ 그린그린 네컷 콜라주 생성하기</button>
+      </div>
+      <div class="status" id="st4"></div>
+    </section>
+
+    <!-- 5. 결과 -->
+    <section id="s5" class="screen">
+      <div class="card">
+        <h2>5. 완성! (엽서 100×148mm)</h2>
+        <img id="result" alt="그린그린 네컷 결과">
+        <p class="hint" style="text-align:center;">저장이 막히면 위 사진을 <b>길게 눌러</b> ‘이미지 저장 / 사진에 추가’를 선택하세요.</p>
+      </div>
+      <button class="btn primary big" id="btnDownload">💾 이미지 파일로 기기에 저장</button>
+      <button class="btn" id="btnDrive">🖨️ 인쇄용으로 구글드라이브에 전송</button>
+      <button class="btn" id="btnRestart">↩️ 처음으로</button>
+      <div class="status" id="st5"></div>
+    </section>
+
+  </main>
+
+  <footer>ⓒ HOHOHOON T. All rights reserved.</footer>
+</div>
+
+<script>
+/* =========================================================
+   ★ 여기만 본인 Apps Script 웹앱 /exec 주소로 바꾸세요
+   ========================================================= */
+var API_URL = 'https://script.google.com/macros/s/AKfycb.................../exec';
+
+/* 출력 규격 : 캐논 SELPHY 엽서 100 x 148 mm @300dpi */
+var PRINT_W = 1181, PRINT_H = 1748;
+var LOGIC_W = 1200, LOGIC_H = 1776;
+
+var state = {
+  studentId:'', row:0, shots:[], selected:[], frame:'green',
+  resultUrl:'', sound:true, facing:'user'
+};
+var stream = null, shooting = false, audioCtx = null;
+
+var $ = function (id) { return document.getElementById(id); };
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+function show(id) {
+  var list = document.querySelectorAll('.screen');
+  for (var i = 0; i < list.length; i++) { list[i].classList.remove('active'); }
+  $(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function msg(id, text, ok) {
+  var el = $(id);
+  el.innerHTML = text || '';
+  el.className = 'status ' + (ok === false ? 'err' : 'ok');
+}
+function setLed(kind, text) {
+  $('led').className = 'led ' + kind;
+  $('camStateText').innerHTML = text;
+}
+
+/* =========================================================
+   서버 통신 : JSONP(GET) + POST(text/plain)
+   ========================================================= */
+var jsonpSeq = 0;
+function jsonp(params, ok, fail) {
+  if (!API_URL || API_URL.indexOf('AKfycb....') >= 0) {
+    if (fail) { fail(new Error('API_URL이 설정되지 않았습니다.')); }
+    return;
+  }
+  var cbName = 'ggcb_' + (++jsonpSeq) + '_' + Date.now();
+  var timer = setTimeout(function () { cleanup(); if (fail) { fail(new Error('응답 시간 초과')); } }, 20000);
+
+  function cleanup() {
+    clearTimeout(timer);
+    try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+    if (s && s.parentNode) { s.parentNode.removeChild(s); }
+  }
+  window[cbName] = function (res) { cleanup(); if (ok) { ok(res); } };
+
+  var q = ['callback=' + cbName];
+  Object.keys(params).forEach(function (k) {
+    q.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+  });
+  var s = document.createElement('script');
+  s.src = API_URL + '?' + q.join('&');
+  s.onerror = function () { cleanup(); if (fail) { fail(new Error('네트워크 오류')); } };
+  document.body.appendChild(s);
+}
+
+function postJson(payload, ok, fail) {
+  if (!API_URL || API_URL.indexOf('AKfycb....') >= 0) {
+    if (fail) { fail(new Error('API_URL이 설정되지 않았습니다.')); }
+    return;
+  }
+  var body = JSON.stringify(payload);
+  fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // preflight 방지
+    body: body
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (res) { if (ok) { ok(res); } })
+    .catch(function () {
+      // CORS로 응답을 못 읽는 환경 대비 : 전송만 수행
+      fetch(API_URL, { method: 'POST', mode: 'no-cors', body: body })
+        .then(function () { if (ok) { ok({ ok: true, message: '전송을 완료했습니다.' }); } })
+        .catch(function (e) { if (fail) { fail(e); } });
+    });
+}
+
+/* =========================================================
+   프레임 테마 6종 (캐릭터 6개씩)
+   ========================================================= */
+var THEMES = {
+  green : { name:'초록', dot:'#6fb63a',
+            bg:'#dff3d6', hill:'#a9dc82', hill2:'#8ecb63', frame:'#4a9a2a',
+            title:['우리의 작은 실천이','지구를 웃게 해요'], titleColor:'#2f7d1e',
+            bubbleBg:'#ecf8e2', bubbleLine:'#8fc46a', bubbleText:'#3f8a2a', accent:'#7cc24a',
+            ch:{ tl:'earth', tr:'cloud', l:'rabbit', r:'bee', bl:'flowerChar', br:'tree' } },
+
+  blue  : { name:'파랑', dot:'#3b82d6',
+            bg:'#cfe8fa', hill:'#f6e2b8', hill2:'#efd39b', frame:'#1f5fbf',
+            title:['푸른 바다, 깨끗한 지구','우리의 약속 💙'], titleColor:'#12459b',
+            bubbleBg:'#e4f2fd', bubbleLine:'#79b4ec', bubbleText:'#12459b', accent:'#4f9de8',
+            ch:{ tl:'cloud', tr:'dolphin', l:'turtle', r:'star', bl:'penguin', br:'shell' } },
+
+  yellow: { name:'노랑', dot:'#f2c518',
+            bg:'#fdf2c2', hill:'#f7e08a', hill2:'#f2d264', frame:'#f2c518',
+            title:['함께 줄이고','가볍게 지구살림 🌿'], titleColor:'#3f8a2a',
+            bubbleBg:'#fffbe8', bubbleLine:'#eccf52', bubbleText:'#3f8a2a', accent:'#8dc63f',
+            ch:{ tl:'cloud', tr:'sun', l:'sprout', r:'bee', bl:'flowerChar', br:'bin' } },
+
+  orange: { name:'주황', dot:'#f39034',
+            bg:'#fbdcc4', hill:'#f6c489', hill2:'#f0b06a', frame:'#f39034',
+            title:['함께 줄이고','가볍게 지구살림 🧡'], titleColor:'#d2691e',
+            bubbleBg:'#fff3e6', bubbleLine:'#f0a765', bubbleText:'#c25b12', accent:'#f5a05a',
+            ch:{ tl:'cloud', tr:'sun', l:'flowerChar', r:'bee', bl:'sprout', br:'bin' } },
+
+  pink  : { name:'분홍', dot:'#ef8fb4',
+            bg:'#fbdbe8', hill:'#f7c6d9', hill2:'#f2b1cb', frame:'#ef8fb4',
+            title:['작은 행동이','큰 변화를 만들어요'], titleColor:'#d94f86',
+            bubbleBg:'#fdeef4', bubbleLine:'#f0a5c3', bubbleText:'#d94f86', accent:'#f6a8c6',
+            ch:{ tl:'blossom', tr:'butterfly', l:'rabbit', r:'tree', bl:'flowerChar', br:'bin' } },
+
+  purple: { name:'보라', dot:'#9b7ae0',
+            bg:'#e3d6fa', hill:'#bfe39a', hill2:'#a6d67c', frame:'#9b7ae0',
+            title:['지금, 여기에서','더 나은 미래를 만들어요'], titleColor:'#5b3ea8',
+            bubbleBg:'#f1e9ff', bubbleLine:'#b79ceb', bubbleText:'#5b3ea8', accent:'#b79ceb',
+            ch:{ tl:'cloud', tr:'butterfly', l:'earth', r:'sprout', bl:'flowerChar', br:'tree' } }
+};
+
+/* =========================================================
+   Canvas 기본 도형
+   ========================================================= */
+function rr(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+}
+function circle(c, x, y, r, color) {
+  c.beginPath();
+  c.arc(x, y, r, 0, Math.PI * 2);
+  c.fillStyle = color;
+  c.fill();
+}
+function heart(c, cx, cy, s, color) {
+  c.save();
+  c.translate(cx, cy);
+  c.scale(s / 100, s / 100);
+  c.beginPath();
+  c.moveTo(0, 38);
+  c.bezierCurveTo(-52, -2, -40, -52, 0, -22);
+  c.bezierCurveTo(40, -52, 52, -2, 0, 38);
+  c.closePath();
+  c.fillStyle = color;
+  c.fill();
+  c.restore();
+}
+function smile(c, x, y, r, color, w) {
+  c.strokeStyle = color;
+  c.lineWidth = w || 3;
+  c.lineCap = 'round';
+  c.beginPath();
+  c.arc(x, y, r, 0.15 * Math.PI, 0.85 * Math.PI);
+  c.stroke();
+}
+
+/* =========================================================
+   캐릭터
+   ========================================================= */
+function cloud(c, x, y, s) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.fillStyle = '#ffffff';
+  c.beginPath();
+  c.arc(-36, 6, 28, 0, Math.PI * 2);
+  c.arc(0, -12, 38, 0, Math.PI * 2);
+  c.arc(38, 6, 28, 0, Math.PI * 2);
+  c.rect(-36, 6, 74, 24);
+  c.fill();
+  circle(c, -13, 6, 5, '#3f3f46');
+  circle(c, 15, 6, 5, '#3f3f46');
+  circle(c, -26, 16, 7, '#f9c6cf');
+  circle(c, 28, 16, 7, '#f9c6cf');
+  smile(c, 1, 14, 9, '#3f3f46', 3);
+  c.restore();
+}
+function sun(c, x, y, s, color) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.strokeStyle = color; c.lineWidth = 9; c.lineCap = 'round';
+  for (var i = 0; i < 12; i++) {
+    var a = i * Math.PI / 6;
+    c.beginPath();
+    c.moveTo(Math.cos(a) * 60, Math.sin(a) * 60);
+    c.lineTo(Math.cos(a) * 80, Math.sin(a) * 80);
+    c.stroke();
+  }
+  circle(c, 0, 0, 53, color);
+  circle(c, -18, -6, 6, '#4b3b17');
+  circle(c, 18, -6, 6, '#4b3b17');
+  circle(c, -30, 8, 9, 'rgba(240,120,90,.45)');
+  circle(c, 30, 8, 9, 'rgba(240,120,90,.45)');
+  smile(c, 0, 6, 16, '#4b3b17', 4);
+  c.restore();
+}
+function earthChar(c, x, y, s) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  circle(c, 0, 0, 46, '#5ab4e8');
+  c.fillStyle = '#5aa02c';
+  c.beginPath(); c.ellipse(-16, -12, 20, 13, 0.3, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(18, 14, 18, 12, -0.2, 0, Math.PI * 2); c.fill();
+  circle(c, -15, 0, 5, '#243b53');
+  circle(c, 15, 0, 5, '#243b53');
+  circle(c, -27, 12, 7, 'rgba(240,120,140,.5)');
+  circle(c, 27, 12, 7, 'rgba(240,120,140,.5)');
+  smile(c, 0, 8, 12, '#243b53', 3);
+  heart(c, 34, 34, 34, '#f28cb1');
+  c.restore();
+}
+function rabbit(c, x, y, s) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.fillStyle = '#fff';
+  c.beginPath(); c.ellipse(-16, -44, 11, 30, 0.1, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(14, -46, 11, 30, -0.1, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#f8b8cd';
+  c.beginPath(); c.ellipse(-16, -44, 5, 20, 0.1, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(14, -46, 5, 20, -0.1, 0, Math.PI * 2); c.fill();
+  circle(c, 0, 0, 40, '#fff');
+  circle(c, -14, -4, 5, '#333');
+  circle(c, 14, -4, 5, '#333');
+  circle(c, -25, 8, 8, '#f8b8cd');
+  circle(c, 25, 8, 8, '#f8b8cd');
+  circle(c, 0, 6, 4, '#f28cb1');
+  heart(c, 0, 30, 40, '#f28cb1');
+  c.restore();
+}
+function bee(c, x, y, s) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.fillStyle = 'rgba(255,255,255,.9)';
+  c.beginPath(); c.ellipse(-14, -20, 20, 13, -0.5, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(16, -20, 20, 13, 0.5, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#f7d24a';
+  c.beginPath(); c.ellipse(0, 4, 34, 24, 0, 0, Math.PI * 2); c.fill();
+  c.save();
+  c.beginPath(); c.ellipse(0, 4, 34, 24, 0, 0, Math.PI * 2); c.clip();
+  c.fillStyle = '#3b3b3b';
+  c.fillRect(4, -22, 11, 52);
+  c.fillRect(22, -22, 11, 52);
+  c.restore();
+  circle(c, -14, -2, 4, '#3b3b3b');
+  circle(c, -1, -2, 4, '#3b3b3b');
+  circle(c, -8, 9, 6, 'rgba(240,120,90,.4)');
+  smile(c, -7, 4, 7, '#3b3b3b', 2.5);
+  c.restore();
+}
+function butterfly(c, x, y, s, color) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.fillStyle = color;
+  c.beginPath(); c.ellipse(-24, -14, 22, 16, -0.4, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(24, -14, 22, 16, 0.4, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(-19, 15, 16, 13, 0.4, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(19, 15, 16, 13, -0.4, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#6b4b2a';
+  rr(c, -5, -20, 10, 42, 5); c.fill();
+  c.strokeStyle = '#6b4b2a'; c.lineWidth = 3; c.lineCap = 'round';
+  c.beginPath(); c.moveTo(-3, -20); c.quadraticCurveTo(-14, -36, -20, -32); c.stroke();
+  c.beginPath(); c.moveTo(3, -20); c.quadraticCurveTo(14, -36, 20, -32); c.stroke();
+  circle(c, -4, -14, 2.6, '#fff');
+  circle(c, 4, -14, 2.6, '#fff');
+  c.restore();
+}
+function turtle(c, x, y, s) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  circle(c, 44, -6, 18, '#8ed15c');
+  circle(c, 38, -10, 3.6, '#2f3b1f');
+  circle(c, 50, 2, 6, 'rgba(240,120,140,.45)');
+  smile(c, 44, -2, 6, '#2f3b1f', 2.4);
+  c.fillStyle = '#5aa02c';
+  c.beginPath(); c.ellipse(0, 0, 46, 32, 0, Math.PI, 0); c.fill();
+  circle(c, -18, -12, 8, '#3f7d1e');
+  circle(c, 6, -16, 8, '#3f7d1e');
+  circle(c, 24, -8, 7, '#3f7d1e');
+  c.fillStyle = '#cfe8a0';
+  c.fillRect(-42, 0, 84, 9);
+  circle(c, -34, 12, 9, '#8ed15c');
+  circle(c, 20, 12, 9, '#8ed15c');
+  c.restore();
+}
+function dolphin(c, x, y, s) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.fillStyle = '#4fa8e0';
+  c.beginPath();
+  c.moveTo(-58, 10);
+  c.quadraticCurveTo(-20, -44, 44, -30);
+  c.quadraticCurveTo(70, -24, 76, -2);
+  c.quadraticCurveTo(38, 22, -8, 26);
+  c.quadraticCurveTo(-38, 28, -58, 10);
+  c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(-2, -36); c.quadraticCurveTo(12, -62, 26, -32); c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(-56, 8); c.lineTo(-90, -14); c.lineTo(-80, 14); c.lineTo(-92, 32); c.closePath(); c.fill();
+  c.fillStyle = '#dff0fb';
+  c.beginPath(); c.ellipse(20, 6, 38, 13, -0.08, 0, Math.PI * 2); c.fill();
+  circle(c, 50, -14, 5, '#22364a');
+  circle(c, 40, -2, 7, 'rgba(240,120,140,.4)');
+  smile(c, 56, -6, 7, '#22364a', 2.5);
+  c.restore();
+}
+function penguin(c, x, y, s) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.fillStyle = '#f6a93b';
+  c.beginPath(); c.ellipse(-16, 48, 13, 7, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(16, 48, 13, 7, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#3c3c46';
+  c.beginPath(); c.ellipse(0, 0, 36, 48, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(-36, 4, 11, 26, 0.25, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(36, 4, 11, 26, -0.25, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#ffffff';
+  c.beginPath(); c.ellipse(0, 8, 24, 36, 0, 0, Math.PI * 2); c.fill();
+  circle(c, -12, -18, 5, '#ffffff');
+  circle(c, 12, -18, 5, '#ffffff');
+  circle(c, -12, -18, 3, '#26262e');
+  circle(c, 12, -18, 3, '#26262e');
+  c.fillStyle = '#f6a93b';
+  c.beginPath(); c.moveTo(-8, -6); c.lineTo(8, -6); c.lineTo(0, 4); c.closePath(); c.fill();
+  circle(c, -24, -6, 7, 'rgba(240,120,140,.45)');
+  circle(c, 24, -6, 7, 'rgba(240,120,140,.45)');
+  c.restore();
+}
+function sprout(c, x, y, s, color) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.strokeStyle = '#4e8c2a'; c.lineWidth = 8; c.lineCap = 'round';
+  c.beginPath(); c.moveTo(0, 34); c.lineTo(0, -6); c.stroke();
+  c.fillStyle = color;
+  c.beginPath(); c.ellipse(-22, -16, 23, 14, -0.5, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(22, -16, 23, 14, 0.5, 0, Math.PI * 2); c.fill();
+  circle(c, -8, -12, 3.2, '#2f4a1a');
+  circle(c, 8, -12, 3.2, '#2f4a1a');
+  smile(c, 0, -8, 7, '#2f4a1a', 2.4);
+  c.restore();
+}
+function tree(c, x, y, s, color) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.fillStyle = '#8b5e3c';
+  rr(c, -10, 0, 20, 48, 6); c.fill();
+  circle(c, -26, -10, 30, color);
+  circle(c, 26, -10, 30, color);
+  circle(c, 0, -36, 36, color);
+  circle(c, -12, -28, 4.5, '#2f4a1a');
+  circle(c, 12, -28, 4.5, '#2f4a1a');
+  circle(c, -24, -18, 7, 'rgba(240,120,140,.4)');
+  circle(c, 24, -18, 7, 'rgba(240,120,140,.4)');
+  smile(c, 0, -22, 10, '#2f4a1a', 3);
+  c.restore();
+}
+function bin(c, x, y, s, color) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.fillStyle = color;
+  rr(c, -44, -52, 88, 24, 8); c.fill();
+  rr(c, -12, -66, 24, 14, 6); c.fill();
+  rr(c, -38, -24, 76, 96, 12); c.fill();
+  c.strokeStyle = '#ffffff'; c.lineWidth = 7; c.lineJoin = 'round';
+  c.beginPath(); c.moveTo(0, 8); c.lineTo(20, 42); c.lineTo(-20, 42); c.closePath(); c.stroke();
+  c.restore();
+}
+function flowerChar(c, x, y, s, color) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.strokeStyle = '#5aa02c'; c.lineWidth = 7; c.lineCap = 'round';
+  c.beginPath(); c.moveTo(0, 30); c.lineTo(0, 66); c.stroke();
+  c.fillStyle = '#7cc24a';
+  c.beginPath(); c.ellipse(-18, 46, 16, 9, -0.3, 0, Math.PI * 2); c.fill();
+  for (var i = 0; i < 8; i++) {
+    var a = i * Math.PI / 4;
+    circle(c, Math.cos(a) * 26, Math.sin(a) * 26, 15, '#ffffff');
+  }
+  circle(c, 0, 0, 20, color);
+  circle(c, -7, -3, 3.4, '#4b3b17');
+  circle(c, 7, -3, 3.4, '#4b3b17');
+  smile(c, 0, 1, 8, '#4b3b17', 2.4);
+  c.restore();
+}
+function blossom(c, x, y, r, color) {
+  for (var i = 0; i < 5; i++) {
+    var a = i * Math.PI * 2 / 5 - Math.PI / 2;
+    c.save();
+    c.translate(x + Math.cos(a) * r * 0.85, y + Math.sin(a) * r * 0.85);
+    c.rotate(a);
+    c.fillStyle = color;
+    c.beginPath(); c.ellipse(0, 0, r * 0.72, r * 0.55, 0, 0, Math.PI * 2); c.fill();
+    c.restore();
+  }
+  circle(c, x, y, r * 0.32, '#fff3b0');
+}
+function shell(c, x, y, s, color) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.fillStyle = color;
+  c.beginPath();
+  c.moveTo(0, 34);
+  c.quadraticCurveTo(-56, 20, -36, -22);
+  c.quadraticCurveTo(0, -50, 36, -22);
+  c.quadraticCurveTo(56, 20, 0, 34);
+  c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 4;
+  for (var i = -2; i <= 2; i++) {
+    c.beginPath(); c.moveTo(0, 30); c.lineTo(i * 17, -28); c.stroke();
+  }
+  c.restore();
+}
+function star5(c, x, y, r, color) {
+  c.save(); c.translate(x, y);
+  c.beginPath();
+  for (var i = 0; i < 10; i++) {
+    var rad = (i % 2 === 0) ? r : r * 0.45;
+    var a = i * Math.PI / 5 - Math.PI / 2;
+    c.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
+  }
+  c.closePath(); c.fillStyle = color; c.fill();
+  circle(c, -r * 0.24, -r * 0.05, r * 0.1, '#fff');
+  circle(c, r * 0.24, -r * 0.05, r * 0.1, '#fff');
+  c.restore();
+}
+function flowerSmall(c, x, y, r, petal, center) {
+  for (var i = 0; i < 6; i++) {
+    var a = i * Math.PI / 3;
+    circle(c, x + Math.cos(a) * r, y + Math.sin(a) * r, r * 0.72, petal);
+  }
+  circle(c, x, y, r * 0.6, center);
+}
+function drawChar(c, name, x, y, s, t) {
+  switch (name) {
+    case 'cloud':      cloud(c, x, y, s); break;
+    case 'sun':        sun(c, x, y, s, (t.name === '주황') ? '#f6b45a' : '#f7d24a'); break;
+    case 'earth':      earthChar(c, x, y, s); break;
+    case 'rabbit':     rabbit(c, x, y, s); break;
+    case 'bee':        bee(c, x, y, s); break;
+    case 'butterfly':  butterfly(c, x, y, s, '#f7d24a'); break;
+    case 'turtle':     turtle(c, x, y, s); break;
+    case 'dolphin':    dolphin(c, x, y, s); break;
+    case 'penguin':    penguin(c, x, y, s); break;
+    case 'sprout':     sprout(c, x, y, s, '#7cc24a'); break;
+    case 'tree':       tree(c, x, y, s, '#6fb63a'); break;
+    case 'bin':        bin(c, x, y, s, t.frame); break;
+    case 'flowerChar': flowerChar(c, x, y, s, t.accent); break;
+    case 'blossom':    blossom(c, x, y, 50 * s, '#f8b8cd'); break;
+    case 'shell':      shell(c, x, y, s * 0.8, '#f6c6d6'); break;
+    case 'star':       star5(c, x, y, 38 * s, '#f5a3c0'); break;
+  }
+}
+function drawCover(c, img, x, y, w, h, r) {
+  c.save();
+  rr(c, x, y, w, h, r);
+  c.clip();
+  var sr = img.width / img.height, dr = w / h, sw, sh, sx, sy;
+  if (sr > dr) { sh = img.height; sw = sh * dr; sx = (img.width - sw) / 2; sy = 0; }
+  else { sw = img.width; sh = sw / dr; sx = 0; sy = (img.height - sh) / 2; }
+  c.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+  c.restore();
+}
+
+/* =========================================================
+   콜라주 도안
+   ========================================================= */
+function drawCollage(c, t, imgs) {
+  var W = LOGIC_W, H = LOGIC_H;
+
+  c.fillStyle = t.bg;
+  c.fillRect(0, 0, W, H);
+
+  c.fillStyle = t.hill;
+  c.beginPath();
+  c.moveTo(0, 1560);
+  c.quadraticCurveTo(300, 1492, 620, 1556);
+  c.quadraticCurveTo(920, 1618, 1200, 1536);
+  c.lineTo(1200, H); c.lineTo(0, H); c.closePath(); c.fill();
+
+  c.fillStyle = t.hill2;
+  c.beginPath();
+  c.moveTo(0, 1664);
+  c.quadraticCurveTo(400, 1606, 780, 1668);
+  c.quadraticCurveTo(1000, 1700, 1200, 1644);
+  c.lineTo(1200, H); c.lineTo(0, H); c.closePath(); c.fill();
+
+  drawChar(c, t.ch.tl, 108, 152, 1.05, t);
+  drawChar(c, t.ch.tr, 1092, 148, 1.05, t);
+
+  heart(c, 1132, 420, 44, t.accent);
+  heart(c, 74, 560, 36, t.accent);
+  heart(c, 1140, 1150, 40, t.accent);
+  heart(c, 66, 1180, 32, t.accent);
+
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillStyle = t.titleColor;
+  c.font = '72px Jua, "Malgun Gothic", sans-serif';
+  c.fillText(t.title[0], W / 2, 146);
+  c.fillText(t.title[1], W / 2, 232);
+
+  var gx = 140, gy = 312, gw = 920, gh = 1020, gap = 24;
+  var sw = (gw - gap) / 2, sh = (gh - gap) / 2, rad = 26;
+  var pos = [
+    [gx, gy],
+    [gx + sw + gap, gy],
+    [gx, gy + sh + gap],
+    [gx + sw + gap, gy + sh + gap]
+  ];
+  for (var i = 0; i < 4; i++) {
+    var px = pos[i][0], py = pos[i][1];
+    c.fillStyle = '#ffffff';
+    rr(c, px - 7, py - 7, sw + 14, sh + 14, rad + 6);
+    c.fill();
+    if (imgs && imgs[i]) {
+      drawCover(c, imgs[i], px, py, sw, sh, rad);
+    } else {
+      c.fillStyle = 'rgba(120,120,120,.20)';
+      rr(c, px, py, sw, sh, rad);
+      c.fill();
+    }
+    c.strokeStyle = t.frame;
+    c.lineWidth = 14;
+    rr(c, px, py, sw, sh, rad);
+    c.stroke();
+  }
+  var midY = gy + sh + gap / 2;
+  c.strokeStyle = t.frame;
+  c.lineWidth = 14;
+  c.beginPath();
+  c.moveTo(gx, midY);
+  c.lineTo(gx + gw, midY);
+  c.stroke();
+  heart(c, W / 2, midY, 90, t.frame);
+
+  drawChar(c, t.ch.l, 104, midY - 8, 1.0, t);
+  drawChar(c, t.ch.r, 1096, midY - 8, 1.0, t);
+
+  var bw = 560, bh = 140, bx = (W - bw) / 2, by = 1372;
+  c.fillStyle = t.bubbleBg;
+  c.strokeStyle = t.bubbleLine;
+  c.lineWidth = 6;
+  rr(c, bx, by, bw, bh, 56);
+  c.fill(); c.stroke();
+  c.beginPath();
+  c.moveTo(bx + 392, by + bh - 6);
+  c.lineTo(bx + 422, by + bh + 40);
+  c.lineTo(bx + 444, by + bh - 6);
+  c.closePath();
+  c.fillStyle = t.bubbleBg; c.fill();
+  c.fillStyle = t.bubbleText;
+  c.textAlign = 'center';
+  c.font = '44px Jua, "Malgun Gothic", sans-serif';
+  c.fillText('지구야, 고마워!', W / 2, by + 48);
+  c.fillText('우리 함께 지키자!', W / 2, by + 102);
+
+  drawChar(c, t.ch.bl, 250, 1668, 0.92, t);
+  drawChar(c, t.ch.br, 962, 1656, 0.86, t);
+  flowerSmall(c, 78, 1690, 20, '#ffffff', '#f7d24a');
+  flowerSmall(c, 158, 1738, 15, '#ffffff', '#f7d24a');
+  flowerSmall(c, 1120, 1694, 20, '#ffffff', '#f7d24a');
+  flowerSmall(c, 1046, 1742, 15, '#ffffff', '#f7d24a');
+
+  var schoolName = '강동중학교';
+  c.font = '54px Jua, "Malgun Gothic", sans-serif';
+  var tw = c.measureText(schoolName).width;
+  var cy0 = 1610;
+  c.fillStyle = 'rgba(255,255,255,.78)';
+  rr(c, (W - tw) / 2 - 42, cy0 - 44, tw + 84, 88, 44);
+  c.fill();
+  c.fillStyle = '#33402a';
+  c.textAlign = 'center';
+  c.fillText(schoolName, W / 2, cy0 + 2);
+
+  c.fillStyle = 'rgba(60,60,60,.55)';
+  c.font = '21px Pretendard, sans-serif';
+  c.fillText('ⓒ HOHOHOON T', W / 2, 1748);
+}
+
+/* =========================================================
+   카메라 : 페이지 로드 즉시 권한 요청
+   ========================================================= */
+function streamAlive() {
+  if (!stream) { return false; }
+  var tr = stream.getVideoTracks();
+  return tr.length > 0 && tr[0].readyState === 'live';
+}
+function initCamera() {
+  if (streamAlive()) { return; }
+  setLed('wait', '웹캠 연결 중입니다. 권한 창이 뜨면 <b>허용</b>을 눌러 주세요.');
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    camFail({ name: 'NotSupportedError' });
+    return;
+  }
+  var cons = {
+    audio: false,
+    video: { facingMode: { ideal: state.facing }, width: { ideal: 1280 }, height: { ideal: 1600 } }
+  };
+  navigator.mediaDevices.getUserMedia(cons)
+    .then(camOk)
+    .catch(function (err) {
+      if (err && (err.name === 'OverconstrainedError' || err.name === 'NotFoundError')) {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+          .then(camOk)
+          .catch(camFail);
+      } else {
+        camFail(err);
+      }
+    });
+}
+function camOk(s) {
+  if (stream && stream !== s) {
+    stream.getTracks().forEach(function (t) { t.stop(); });
+  }
+  stream = s;
+  var v = $('video');
+  v.srcObject = s;
+  v.classList.toggle('rear', state.facing !== 'user');
+  var p = v.play();
+  if (p && p.catch) { p.catch(function () { }); }
+  $('fallbackBox').classList.add('hidden');
+  setLed('ok', '웹캠이 연결되었습니다. 촬영 준비 완료!');
+  msg('st2', '');
+}
+function camFail(err) {
+  var name = (err && err.name) ? err.name : 'UnknownError';
+  var text = '';
+  if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+    text = '카메라 권한이 <b>거부</b>되었습니다. 주소창 왼쪽 <b>자물쇠(ⓘ) → 사이트 설정 → 카메라 → 허용</b> 후 새로고침해 주세요.';
+    setLed('err', '카메라 권한이 거부되었습니다.');
+  } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+    text = '연결된 웹캠을 찾지 못했습니다. USB 웹캠 연결을 확인해 주세요.';
+    setLed('err', '웹캠을 찾지 못했습니다.');
+  } else if (name === 'NotReadableError' || name === 'TrackStartError') {
+    text = '다른 프로그램이 웹캠을 사용 중입니다. 화상회의·카메라 앱을 종료한 뒤 다시 연결해 주세요.';
+    setLed('err', '웹캠이 다른 프로그램에 사용 중입니다.');
+  } else if (name === 'NotSupportedError' || name === 'SecurityError') {
+    text = '보안 연결(HTTPS)에서만 카메라를 쓸 수 있습니다. https 주소로 접속해 주세요.';
+    setLed('err', 'HTTPS 주소로 접속해 주세요.');
+  } else {
+    text = '웹캠을 열지 못했습니다. (' + name + ')';
+    setLed('err', '웹캠 연결 실패 (' + name + ')');
+  }
+  $('permText').innerHTML = text;
+  $('fallbackBox').classList.remove('hidden');
+}
+
+/* 접속 즉시 실행 */
+(function autoStart() {
+  if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'camera' })
+      .then(function (p) {
+        initCamera();
+        p.onchange = function () {
+          if (p.state === 'granted' && !streamAlive()) { initCamera(); }
+        };
+      })
+      .catch(function () { initCamera(); });
+  } else {
+    initCamera();
+  }
+})();
+
+$('btnRetryCam').onclick = function () { initCamera(); };
+$('btnFlip').onclick = function () {
+  state.facing = (state.facing === 'user') ? 'environment' : 'user';
+  if (stream) {
+    stream.getTracks().forEach(function (t) { t.stop(); });
+    stream = null;
+  }
+  initCamera();
+};
+
+/* =========================================================
+   화면 1 : 학번
+   ========================================================= */
+$('btnToCam').onclick = function () {
+  var id = $('studentId').value.trim();
+  if (!id) { msg('st1', '학번을 입력해 주세요.', false); return; }
+  state.studentId = id;
+
+  show('s2');
+  if (!streamAlive()) { initCamera(); }
+
+  msg('st1', '');
+  jsonp({ action: 'saveId', studentId: id }, function (res) {
+    if (res && res.ok && res.row) { state.row = res.row; }
+  }, function () { });
+};
+
+/* =========================================================
+   화면 2 : 자동 촬영
+   ========================================================= */
+function beep(isShutter) {
+  if (!state.sound) { return; }
+  try {
+    if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+    var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = isShutter ? 'square' : 'sine';
+    o.frequency.value = isShutter ? 1400 : 800;
+    g.gain.setValueAtTime(0.18, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (isShutter ? 0.14 : 0.07));
+    o.start();
+    o.stop(audioCtx.currentTime + (isShutter ? 0.15 : 0.08));
+  } catch (e) { }
+}
+function capture() {
+  var v = $('video');
+  var cw = 900, ch = 1000;
+  var cv = document.createElement('canvas');
+  cv.width = cw; cv.height = ch;
+  var c = cv.getContext('2d');
+  if (state.facing === 'user') { c.translate(cw, 0); c.scale(-1, 1); }
+  var vw = v.videoWidth, vh = v.videoHeight;
+  if (!vw || !vh) { return null; }
+  var dr = cw / ch, sr = vw / vh, sx, sy, sw, sh;
+  if (sr > dr) { sh = vh; sw = sh * dr; sx = (vw - sw) / 2; sy = 0; }
+  else { sw = vw; sh = sw / dr; sx = 0; sy = (vh - sh) / 2; }
+  c.drawImage(v, sx, sy, sw, sh, 0, 0, cw, ch);
+  return cv.toDataURL('image/jpeg', 0.92);
+}
+function renderThumbs() {
+  var box = $('camThumbs');
+  box.innerHTML = '';
+  for (var i = 0; i < 6; i++) {
+    var d = document.createElement('div');
+    if (state.shots[i]) {
+      var im = document.createElement('img');
+      im.src = state.shots[i];
+      d.appendChild(im);
+    }
+    box.appendChild(d);
+  }
+  $('shotCount').textContent = state.shots.length;
+}
+$('btnShutter').onclick = async function () {
+  if (shooting) { return; }
+  if (!streamAlive()) {
+    msg('st2', '웹캠이 연결되지 않았습니다.', false);
+    initCamera();
+    return;
+  }
+  beep(false);
+  shooting = true;
+  state.shots = [];
+  state.selected = [];
+  renderThumbs();
+  $('camMsg').style.display = 'none';
+  this.disabled = true;
+  this.textContent = '자동 촬영 중...';
+
+  for (var i = 0; i < 6; i++) {
+    for (var k = 3; k >= 1; k--) {
+      $('countdown').textContent = k;
+      beep(false);
+      await sleep(1000);
+    }
+    $('countdown').textContent = '';
+    $('flash').classList.add('on');
+    beep(true);
+    var shot = capture();
+    if (shot) { state.shots.push(shot); }
+    renderThumbs();
+    await sleep(120);
+    $('flash').classList.remove('on');
+    await sleep(300);
+  }
+  $('camMsg').style.display = '';
+  $('camMsg').textContent = '촬영 완료!';
+  this.disabled = false;
+  this.textContent = '📸 다시 촬영하기(자동)';
+  shooting = false;
+};
+$('btnSound').onclick = function () {
+  state.sound = !state.sound;
+  this.textContent = state.sound ? '🔊' : '🔇';
+};
+function addFiles(files) {
+  Array.prototype.forEach.call(files, function (f) {
+    if (state.shots.length >= 6) { return; }
+    var fr = new FileReader();
+    fr.onload = function () {
+      state.shots.push(fr.result);
+      renderThumbs();
+      msg('st2', state.shots.length + ' / 6 장 준비됨', true);
+    };
+    fr.readAsDataURL(f);
+  });
+}
+$('fileCam').onchange = function (e) { addFiles(e.target.files); e.target.value = ''; };
+$('fileAlbum').onchange = function (e) { addFiles(e.target.files); e.target.value = ''; };
+$('btnBack2').onclick = function () { show('s1'); };
+$('btnToSelect').onclick = function () {
+  if (state.shots.length < 4) {
+    msg('st2', '사진을 4장 이상 촬영해 주세요. (현재 ' + state.shots.length + '장)', false);
+    return;
+  }
+  buildPicks();
+  show('s3');
+};
+
+/* =========================================================
+   화면 3 : 4장 선택
+   ========================================================= */
+function buildPicks() {
+  var box = $('picks');
+  box.innerHTML = '';
+  state.selected = [];
+  state.shots.forEach(function (src, i) {
+    var d = document.createElement('div');
+    d.className = 'pick';
+    d.innerHTML = '<img src="' + src + '"><div class="no">' + (i + 1) + '</div>';
+    d.onclick = function () { togglePick(i); };
+    box.appendChild(d);
+  });
+  updateSel();
+}
+function togglePick(i) {
+  var at = state.selected.indexOf(i);
+  if (at >= 0) {
+    state.selected.splice(at, 1);
+  } else {
+    if (state.selected.length >= 4) { msg('st3', '4장까지만 선택할 수 있어요.', false); return; }
+    state.selected.push(i);
+  }
+  var nodes = document.querySelectorAll('#picks .pick');
+  for (var k = 0; k < nodes.length; k++) {
+    var idx = state.selected.indexOf(k);
+    nodes[k].classList.toggle('on', idx >= 0);
+    nodes[k].querySelector('.no').textContent = (idx >= 0) ? (idx + 1) : (k + 1);
+  }
+  msg('st3', '');
+  updateSel();
+}
+function updateSel() { $('selCount').textContent = state.selected.length; }
+$('btnBack3').onclick = function () { show('s2'); };
+$('btnToFrame').onclick = function () {
+  if (state.selected.length !== 4) { msg('st3', '사진 4장을 선택해 주세요.', false); return; }
+  buildDots();
+  drawPreview();
+  show('s4');
+};
+
+/* =========================================================
+   화면 4 : 원형 색상 선택
+   ========================================================= */
+var dotsBuilt = false;
+function buildDots() {
+  if (dotsBuilt) { return; }
+  dotsBuilt = true;
+  var box = $('dots');
+  box.innerHTML = '';
+  Object.keys(THEMES).forEach(function (key) {
+    var t = THEMES[key];
+    var d = document.createElement('div');
+    d.className = 'dotbox' + (key === state.frame ? ' on' : '');
+    d.innerHTML = '<div class="dot" style="background:' + t.dot + '"></div><span>' + t.name + '</span>';
+    d.onclick = function () {
+      state.frame = key;
+      var ns = document.querySelectorAll('#dots .dotbox');
+      for (var i = 0; i < ns.length; i++) { ns[i].classList.remove('on'); }
+      d.classList.add('on');
+      drawPreview();
+    };
+    box.appendChild(d);
+  });
+}
+function drawPreview() {
+  var pv = $('preview');
+  var pw = 112;
+  pv.width = pw;
+  pv.height = Math.round(pw * LOGIC_H / LOGIC_W);
+  var pc = pv.getContext('2d');
+  pc.setTransform(1, 0, 0, 1, 0, 0);
+  pc.clearRect(0, 0, pv.width, pv.height);
+  pc.scale(pw / LOGIC_W, pw / LOGIC_W);
+  drawCollage(pc, THEMES[state.frame], null);
+}
+$('btnBack4').onclick = function () { show('s3'); };
+$('btnMake').onclick = async function () {
+  this.disabled = true;
+  msg('st4', '콜라주를 만드는 중입니다...');
+  try {
+    var url = await buildCollage();
+    state.resultUrl = url;
+    $('result').src = url;
+    msg('st4', '');
+    msg('st5', '');
+    show('s5');
+  } catch (e) {
+    msg('st4', '생성 실패: ' + e.message, false);
+  }
+  this.disabled = false;
+};
+function loadImage(src) {
+  return new Promise(function (res, rej) {
+    var im = new Image();
+    im.onload = function () { res(im); };
+    im.onerror = rej;
+    im.src = src;
+  });
+}
+async function buildCollage() {
+  if (document.fonts && document.fonts.load) {
+    try {
+      await document.fonts.load('72px Jua');
+      await document.fonts.ready;
+    } catch (e) { }
+  }
+  var imgs = [];
+  for (var i = 0; i < 4; i++) {
+    imgs.push(await loadImage(state.shots[state.selected[i]]));
+  }
+  var cv = document.createElement('canvas');
+  cv.width = PRINT_W;
+  cv.height = PRINT_H;
+  var c = cv.getContext('2d');
+  c.scale(PRINT_W / LOGIC_W, PRINT_H / LOGIC_H);
+  drawCollage(c, THEMES[state.frame], imgs);
+  return cv.toDataURL('image/jpeg', 0.94);
+}
+
+/* =========================================================
+   화면 5 : 저장 / 전송 / 처음으로
+   ========================================================= */
+$('btnDownload').onclick = function () {
+  if (!state.resultUrl) { return; }
+  var name = '그린그린네컷_엽서_' + state.studentId + '_' + Date.now() + '.jpg';
+  try {
+    var bin = atob(state.resultUrl.split(',')[1]);
+    var arr = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) { arr[i] = bin.charCodeAt(i); }
+    var blob = new Blob([arr], { type: 'image/jpeg' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+    msg('st5', '저장되었습니다. 없으면 위 사진을 <b>길게 눌러</b> 저장하세요.', true);
+  } catch (e) {
+    msg('st5', '자동 저장이 차단되었습니다. 위 사진을 <b>길게 눌러</b> 저장해 주세요.', false);
+  }
+};
+$('btnDrive').onclick = function () {
+  if (!state.resultUrl) { return; }
+  this.disabled = true;
+  msg('st5', '구글드라이브로 전송 중입니다...');
+  var self = this;
+  postJson({
+    action: 'saveImage',
+    row: state.row,
+    studentId: state.studentId,
+    frame: THEMES[state.frame].name,
+    dataUrl: state.resultUrl
+  }, function (res) {
+    self.disabled = false;
+    if (res && res.ok) {
+      msg('st5', '✅ ' + res.message + '<br>‘2026 네컷사진 리스트’ 시트 마지막 열에 주소가 기록되었습니다.', true);
+    } else {
+      msg('st5', '전송 실패: ' + (res ? res.message : '알 수 없는 오류'), false);
+    }
+  }, function (e) {
+    self.disabled = false;
+    msg('st5', '전송 실패: ' + e.message, false);
+  });
+};
+$('btnRestart').onclick = function () {
+  state.shots = [];
+  state.selected = [];
+  state.resultUrl = '';
+  state.row = 0;
+  $('studentId').value = '';
+  $('result').removeAttribute('src');
+  $('camMsg').style.display = '';
+  $('camMsg').textContent = '사진을 촬영하세요';
+  $('btnShutter').textContent = '📸 셔터 누르기(자동촬영)';
+  $('btnShutter').disabled = false;
+  renderThumbs();
+  msg('st1', ''); msg('st2', ''); msg('st3', ''); msg('st4', ''); msg('st5', '');
+  if (!streamAlive()) { initCamera(); }
+  show('s1');
+};
+
+/* =========================================================
+   초기화 / 유지
+   ========================================================= */
+renderThumbs();
+document.addEventListener('visibilitychange', function () {
+  if (!document.hidden && !streamAlive()) { initCamera(); }
+});
+window.addEventListener('pagehide', function () {
+  if (stream) {
+    stream.getTracks().forEach(function (t) { t.stop(); });
+    stream = null;
+  }
+});
+</script>
+</body>
+</html>
