@@ -283,13 +283,19 @@
    ========================================================= */
 var API_URL = 'https://script.google.com/macros/s/AKfycbzbsrW3UkBdZXWW3UQfTvhiFGPbe5x1tO3ZCMnpm0vHA970n9P7RTGDwZv41qo64fdVhg/exec';
 
+/* 교표 이미지 주소 */
+var LOGO_URL = 'https://i.namu.wiki/i/c91Aij5p6e7rnfCN8hFmqDUzlCYkAaWbdRyAgdI-AYRcO_eRbs1Qo3eeivEh04ZSq5w7w35jv7rJO-7oE7xE3bFfnDf8GjX7ZRMLBeZzRRA1BJZ5QatdcivCeWLTW8TM2IRC_vnr0CU2gf_FGTMjtA.webp';
+var logoImg = new Image();
+logoImg.crossOrigin = 'Anonymous';
+logoImg.src = LOGO_URL;
+
 /* 출력 규격 : 캐논 SELPHY 엽서 100 x 148 mm @300dpi */
 var PRINT_W = 1181, PRINT_H = 1748;
 var LOGIC_W = 1200, LOGIC_H = 1776;
 
 var state = {
   studentId:'', row:0, shots:[], selected:[], frame:'green',
-  resultUrl:'', sound:true, facing:'user'
+  resultUrl:'', sound:true, facing:'user', captureDate:''
 };
 var stream = null, shooting = false, audioCtx = null;
 
@@ -311,6 +317,15 @@ function msg(id, text, ok) {
 function setLed(kind, text) {
   $('led').className = 'led ' + kind;
   $('camStateText').innerHTML = text;
+}
+
+/* 오늘 날짜 (yyyy.mm.dd) 생성 함수 */
+function getFormattedDate() {
+  var d = new Date();
+  var yyyy = d.getFullYear();
+  var mm = String(d.getMonth() + 1).padStart(2, '0');
+  var dd = String(d.getDate()).padStart(2, '0');
+  return yyyy + '.' + mm + '.' + dd;
 }
 
 /* =========================================================
@@ -733,8 +748,9 @@ function drawCover(c, img, x, y, w, h, r) {
 /* =========================================================
    콜라주 도안 (엽서 100x148 비율)
    ========================================================= */
-function drawCollage(c, t, imgs) {
+function drawCollage(c, t, imgs, dateStr) {
   var W = LOGIC_W, H = LOGIC_H;
+  var displayDate = dateStr || state.captureDate || getFormattedDate();
 
   c.fillStyle = t.bg;
   c.fillRect(0, 0, W, H);
@@ -823,6 +839,13 @@ function drawCollage(c, t, imgs) {
   c.fillText('지구야, 고마워!', W / 2, by + 48);
   c.fillText('우리 함께 지키자!', W / 2, by + 102);
 
+  /* 촬영 날짜 표시 (yyyy.mm.dd) */
+  c.fillStyle = t.titleColor;
+  c.font = '28px "Pretendard", sans-serif';
+  c.letterSpacing = '2px';
+  c.fillText(displayDate, W / 2, 1542);
+  c.letterSpacing = '0px';
+
   drawChar(c, t.ch.bl, 250, 1668, 0.92, t);
   drawChar(c, t.ch.br, 962, 1656, 0.86, t);
   flowerSmall(c, 78, 1690, 20, '#ffffff', '#f7d24a');
@@ -830,18 +853,29 @@ function drawCollage(c, t, imgs) {
   flowerSmall(c, 1120, 1694, 20, '#ffffff', '#f7d24a');
   flowerSmall(c, 1046, 1742, 15, '#ffffff', '#f7d24a');
 
+  /* 강동중학교 폰트 1pt 축소(54px -> 52.7px) 및 교표 이미지 표시 */
   var schoolName = '강동중학교';
-  c.font = '54px Jua, "Malgun Gothic", sans-serif';
-  var tw = c.measureText(schoolName).width;
+  c.font = '52.7px Jua, "Malgun Gothic", sans-serif';
+  var textWidth = c.measureText(schoolName).width;
+  var logoSize = 50;
+  var logoGap = 12;
+  var totalContentWidth = logoSize + logoGap + textWidth;
   var cy0 = 1610;
+
   c.fillStyle = 'rgba(255,255,255,.78)';
-  rr(c, (W - tw) / 2 - 42, cy0 - 44, tw + 84, 88, 44);
+  rr(c, (W - totalContentWidth) / 2 - 34, cy0 - 44, totalContentWidth + 68, 88, 44);
   c.fill();
+
+  var startX = (W - totalContentWidth) / 2;
+  if (logoImg.complete && logoImg.naturalWidth > 0) {
+    c.drawImage(logoImg, startX, cy0 - (logoSize / 2), logoSize, logoSize);
+  }
   c.fillStyle = '#33402a';
-  c.textAlign = 'center';
-  c.fillText(schoolName, W / 2, cy0 + 2);
+  c.textAlign = 'left';
+  c.fillText(schoolName, startX + logoSize + logoGap, cy0 + 2);
 
   c.fillStyle = 'rgba(60,60,60,.55)';
+  c.textAlign = 'center';
   c.font = '21px Pretendard, sans-serif';
   c.fillText('ⓒ HOHOHOON T', W / 2, 1748);
 }
@@ -960,6 +994,7 @@ $('btnToCam').onclick = function () {
   state.studentId = id;
   state.shots = [];
   state.selected = [];
+  state.captureDate = getFormattedDate();
 
   show('s2');
   if (!streamAlive()) { initCamera(); }
@@ -999,6 +1034,7 @@ async function startAutoShooting() {
   shooting = true;
   state.shots = [];
   state.selected = [];
+  state.captureDate = getFormattedDate();
 
   for (var i = 0; i < 6; i++) {
     $('cutNow').textContent = (i + 1);
@@ -1121,7 +1157,7 @@ function drawPreview() {
   pc.setTransform(1, 0, 0, 1, 0, 0);
   pc.clearRect(0, 0, pv.width, pv.height);
   pc.scale(pw / LOGIC_W, pw / LOGIC_W);
-  drawCollage(pc, THEMES[state.frame], null);
+  drawCollage(pc, THEMES[state.frame], null, state.captureDate);
 }
 $('btnBack4').onclick = function () { show('s3'); };
 $('btnMake').onclick = async function () {
@@ -1163,7 +1199,7 @@ async function buildCollage() {
   cv.height = PRINT_H;
   var c = cv.getContext('2d');
   c.scale(PRINT_W / LOGIC_W, PRINT_H / LOGIC_H);
-  drawCollage(c, THEMES[state.frame], imgs);
+  drawCollage(c, THEMES[state.frame], imgs, state.captureDate);
   return cv.toDataURL('image/jpeg', 0.94);
 }
 
