@@ -11,7 +11,7 @@
   :root{
     --green:#4c9a2a; --green-dark:#3b7c1f;
     --border:#d8ddd6; --fg:#1f2937; --muted:#6b7280;
-    --topH:60px;
+    --topH:54px; --botH:78px;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; padding:0; width:100%; height:100%;}
@@ -59,41 +59,39 @@
   .led.ok{background:#22c55e;} .led.wait{background:#f59e0b;} .led.err{background:#ef4444;}
   body.studio header, body.studio .camstate, body.studio footer{display:none;}
 
-  /* ===== 촬영 스튜디오 (촬영 화면, 순서 숫자, 타이머만 표시) ===== */
+  /* ===== 촬영 스튜디오 ===== */
   .studioStage{
     position:fixed; inset:0; z-index:60; background:#0d110c;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    display:flex; flex-direction:column; justify-content:space-between;
   }
   
-  /* 상단 순서 숫자 표시 */
+  /* 상단 순서 표시 */
   .stageTop{
-    position:absolute; top:0; left:0; right:0; height:var(--topH);
-    display:flex; align-items:center; justify-content:center;
-    padding-top:env(safe-area-inset-top); z-index:10; pointer-events:none;
+    flex:0 0 var(--topH); display:flex; align-items:center; justify-content:center;
+    padding-top:env(safe-area-inset-top); z-index:10;
   }
   .stageTop .cut{
-    font-size:24px; letter-spacing:2px; color:#e8f1e2;
-    background:rgba(0,0,0,0.5); padding:6px 18px; border-radius:20px;
+    font-size:20px; letter-spacing:2px; color:#e8f1e2;
+    background:rgba(0,0,0,0.5); padding:4px 16px; border-radius:20px;
     backdrop-filter:blur(4px);
   }
-  .stageTop .cut b{font-size:32px; color:#a9e07a;}
+  .stageTop .cut b{font-size:26px; color:#a9e07a;}
 
-  .stageView{
-    width:100%; height:100%; display:flex; align-items:center; justify-content:center;
-    padding:calc(var(--topH) + 10px) 16px 20px;
-  }
-  
   /* 4:5 정비율 뷰파인더 */
+  .stageView{
+    flex:1 1 auto; display:flex; align-items:center; justify-content:center;
+    overflow:hidden; padding:2px 14px;
+  }
   .frameBox{
-    position:relative; aspect-ratio:4/5; border-radius:18px; overflow:hidden; background:#000;
-    border:4px solid #4c9a2a;
+    position:relative; aspect-ratio:4/5; border-radius:16px; overflow:hidden; background:#000;
+    border:3.5px solid #4c9a2a;
     box-shadow:0 0 30px rgba(0,0,0,0.8);
     height:min(100%, calc(100vw * 1.25));
-    max-height:calc(100vh - var(--topH) - 40px);
+    max-height:calc(100vh - var(--topH) - var(--botH) - 16px);
     width:auto;
   }
   @supports (height: 100dvh){
-    .frameBox{ max-height:calc(100dvh - var(--topH) - 40px); }
+    .frameBox{ max-height:calc(100dvh - var(--topH) - var(--botH) - 16px); }
   }
   .frameBox video{
     width:100%; height:100%; object-fit:cover; display:block;
@@ -101,14 +99,24 @@
   }
   .frameBox video.rear{transform:none;}
   
-  /* 카운트다운 숫자 오버레이 */
+  /* 카운트다운 및 플래시 */
   .countdown{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    color:#fff; font-size:clamp(100px, 30vh, 220px); font-weight:bold;
+    color:#fff; font-size:clamp(90px, 25vh, 200px); font-weight:bold;
     text-shadow:0 8px 32px rgba(0,0,0,.7); pointer-events:none; z-index:5;
   }
   .flash{position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:6;}
   .flash.on{opacity:.92; transition:opacity .05s;}
+
+  /* 하단 조작 바 */
+  .stageBottom{
+    flex:0 0 var(--botH); display:flex; align-items:center; justify-content:center;
+    padding:6px 14px calc(6px + env(safe-area-inset-bottom));
+    background:#131a10; z-index:10;
+  }
+  .stageBottom .row{width:100%; max-width:500px; gap:8px;}
+  .stageBottom .btn{margin-top:0; padding:12px 10px; font-size:15px; border-radius:10px;}
+  .stageBottom .btn.dark{background:#232d1f; color:#e8f1e2; border-color:#384831;}
 
   .fbCard{
     position:absolute; left:14px; right:14px; top:50%; transform:translateY(-50%);
@@ -155,7 +163,7 @@
 
   /* ===== 태블릿/PC 대응 ===== */
   @media (min-width:700px){
-    :root{ --topH:70px; }
+    :root{ --topH:64px; --botH:88px; }
     .app{max-width:760px; padding:10px 18px 16px;}
     header h1{font-size:26px;}
     header p{font-size:12.5px;}
@@ -171,6 +179,7 @@
     .dot{width:44px; height:44px;}
     .dotbox{width:56px;}
     #result{max-height:64vh;}
+    .stageBottom .btn{font-size:16px; padding:14px 12px;}
   }
 </style>
 </head>
@@ -200,14 +209,16 @@
       <div class="status" id="st1"></div>
     </section>
 
-    <!-- ===== 2. 촬영 화면 (카메라 뷰 + 순서 번호 + 타이머만 노출) ===== -->
+    <!-- ===== 2. 사진 촬영 화면 ===== -->
     <section id="s2" class="screen">
       <div class="studioStage">
 
+        <!-- 상단: 컷 번호 표시 -->
         <div class="stageTop">
-          <span class="cut"><b id="cutNow">1</b> / 6</span>
+          <span class="cut"><b id="cutNow">0</b> / 6</span>
         </div>
 
+        <!-- 중앙: 웹캠 화면 (4:5 정비율) -->
         <div class="stageView">
           <div class="frameBox">
             <video id="video" playsinline webkit-playsinline autoplay muted></video>
@@ -223,6 +234,15 @@
               <label class="btn mini" for="fileAlbum">🖼️ 앨범에서 사진 고르기</label>
               <input type="file" id="fileAlbum" accept="image/*" multiple class="hidden">
             </div>
+          </div>
+        </div>
+
+        <!-- 하단: [이전] [촬영 시작] [화면 전환] 버튼 -->
+        <div class="stageBottom">
+          <div class="row">
+            <button class="btn dark" id="btnBack2" style="flex:0 0 24%;">‹ 이전</button>
+            <button class="btn primary grow" id="btnStartShoot">📸 촬영 시작</button>
+            <button class="btn dark" id="btnFlipCam" style="flex:0 0 30%;">🔄 화면 전환</button>
           </div>
         </div>
 
@@ -283,7 +303,7 @@
    ========================================================= */
 var API_URL = 'https://script.google.com/macros/s/AKfycbzbsrW3UkBdZXWW3UQfTvhiFGPbe5x1tO3ZCMnpm0vHA970n9P7RTGDwZv41qo64fdVhg/exec';
 
-/* 교표 이미지 주소 */
+/* 교표 이미지 로드 */
 var LOGO_URL = 'https://i.namu.wiki/i/c91Aij5p6e7rnfCN8hFmqDUzlCYkAaWbdRyAgdI-AYRcO_eRbs1Qo3eeivEh04ZSq5w7w35jv7rJO-7oE7xE3bFfnDf8GjX7ZRMLBeZzRRA1BJZ5QatdcivCeWLTW8TM2IRC_vnr0CU2gf_FGTMjtA.webp';
 var logoImg = new Image();
 logoImg.crossOrigin = 'Anonymous';
@@ -319,7 +339,7 @@ function setLed(kind, text) {
   $('camStateText').innerHTML = text;
 }
 
-/* 오늘 날짜 (yyyy.mm.dd) 생성 함수 */
+/* 오늘 날짜 반환 (yyyy.mm.dd) */
 function getFormattedDate() {
   var d = new Date();
   var yyyy = d.getFullYear();
@@ -419,7 +439,7 @@ var THEMES = {
 };
 
 /* =========================================================
-   Canvas 기본 도형 및 캐릭터 렌더링
+   Canvas 도안 및 캐릭터 렌더링
    ========================================================= */
 function rr(c, x, y, w, h, r) {
   c.beginPath();
@@ -839,7 +859,7 @@ function drawCollage(c, t, imgs, dateStr) {
   c.fillText('지구야, 고마워!', W / 2, by + 48);
   c.fillText('우리 함께 지키자!', W / 2, by + 102);
 
-  /* 촬영 날짜 표시 (yyyy.mm.dd) */
+  /* 촬영 날짜 (yyyy.mm.dd) */
   c.fillStyle = t.titleColor;
   c.font = '28px "Pretendard", sans-serif';
   c.letterSpacing = '2px';
@@ -853,7 +873,7 @@ function drawCollage(c, t, imgs, dateStr) {
   flowerSmall(c, 1120, 1694, 20, '#ffffff', '#f7d24a');
   flowerSmall(c, 1046, 1742, 15, '#ffffff', '#f7d24a');
 
-  /* 강동중학교 폰트 1pt 축소(54px -> 52.7px) 및 교표 이미지 표시 */
+  /* 강동중학교 폰트 1pt 축소(52.7px) 및 교표 이미지 표시 */
   var schoolName = '강동중학교';
   c.font = '52.7px Jua, "Malgun Gothic", sans-serif';
   var textWidth = c.measureText(schoolName).width;
@@ -948,7 +968,6 @@ function camFail(err) {
   $('fallbackBox').classList.remove('hidden');
 }
 
-/* 접속 즉시 웹캠 권한 요청 */
 (function autoStart() {
   if (navigator.permissions && navigator.permissions.query) {
     navigator.permissions.query({ name: 'camera' })
@@ -965,6 +984,21 @@ function camFail(err) {
 })();
 
 $('btnRetryCam').onclick = function () { initCamera(); };
+
+/* 화면 전환 버튼 */
+$('btnFlipCam').onclick = function () {
+  state.facing = (state.facing === 'user') ? 'environment' : 'user';
+  if (stream) {
+    stream.getTracks().forEach(function (t) { t.stop(); });
+    stream = null;
+  }
+  initCamera();
+};
+
+/* 이전 화면으로 이동 버튼 */
+$('btnBack2').onclick = function () {
+  show('s1');
+};
 
 /* =========================================================
    사운드 (비프음 & 셔터음)
@@ -986,7 +1020,7 @@ function beep(isShutter) {
 }
 
 /* =========================================================
-   화면 1 : 학번 입력 및 자동 촬영 시작
+   화면 1 : 학번 입력 -> 촬영 화면 이동
    ========================================================= */
 $('btnToCam').onclick = function () {
   var id = $('studentId').value.trim();
@@ -995,6 +1029,9 @@ $('btnToCam').onclick = function () {
   state.shots = [];
   state.selected = [];
   state.captureDate = getFormattedDate();
+  $('cutNow').textContent = '0';
+  $('btnStartShoot').disabled = false;
+  $('btnStartShoot').textContent = '📸 촬영 시작';
 
   show('s2');
   if (!streamAlive()) { initCamera(); }
@@ -1003,11 +1040,6 @@ $('btnToCam').onclick = function () {
   jsonp({ action: 'saveId', studentId: id }, function (res) {
     if (res && res.ok && res.row) { state.row = res.row; }
   }, function () { });
-
-  // 1초 후 자동 연속 촬영 시작
-  setTimeout(function () {
-    startAutoShooting();
-  }, 1000);
 };
 
 /* =========================================================
@@ -1029,12 +1061,21 @@ function capture() {
   return cv.toDataURL('image/jpeg', 0.92);
 }
 
-async function startAutoShooting() {
+/* [촬영 시작] 버튼 클릭 이벤트 */
+$('btnStartShoot').onclick = async function () {
   if (shooting) { return; }
+  if (!streamAlive()) {
+    initCamera();
+    return;
+  }
   shooting = true;
   state.shots = [];
   state.selected = [];
   state.captureDate = getFormattedDate();
+  this.disabled = true;
+  this.textContent = '촬영 중...';
+  $('btnBack2').disabled = true;
+  $('btnFlipCam').disabled = true;
 
   for (var i = 0; i < 6; i++) {
     $('cutNow').textContent = (i + 1);
@@ -1054,12 +1095,17 @@ async function startAutoShooting() {
   }
 
   shooting = false;
-  await sleep(600);
+  this.disabled = false;
+  this.textContent = '📸 촬영 시작';
+  $('btnBack2').disabled = false;
+  $('btnFlipCam').disabled = false;
+
+  await sleep(400);
   if (state.shots.length >= 4) {
     buildPicks();
     show('s3');
   }
-}
+};
 
 function addFiles(files) {
   Array.prototype.forEach.call(files, function (f) {
@@ -1114,8 +1160,8 @@ function togglePick(i) {
 }
 function updateSel() { $('selCount').textContent = state.selected.length; }
 $('btnBack3').onclick = function () {
+  $('cutNow').textContent = '0';
   show('s2');
-  setTimeout(startAutoShooting, 600);
 };
 $('btnToFrame').onclick = function () {
   if (state.selected.length !== 4) { msg('st3', '사진 4장을 선택해 주세요.', false); return; }
@@ -1257,7 +1303,7 @@ $('btnRestart').onclick = function () {
   $('studentId').value = '';
   $('result').removeAttribute('src');
   $('picks').innerHTML = '';
-  $('cutNow').textContent = '1';
+  $('cutNow').textContent = '0';
   msg('st1', ''); msg('st3', ''); msg('st4', ''); msg('st5', '');
   if (!streamAlive()) { initCamera(); }
   show('s1');
